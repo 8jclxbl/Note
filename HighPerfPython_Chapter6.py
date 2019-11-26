@@ -3,6 +3,7 @@ from datetime import datetime
 import threading
 from functools import wraps
 
+#阻塞型的例子
 def wait_and_print(msg):
     time.sleep(1.0)
     print(msg)
@@ -14,13 +15,14 @@ def wait_and_print_async(msg):
     timer = threading.Timer(1.0, callback)
     timer.start()
 
-def  network_request(number):
+def network_request(number):
     time.sleep(1.0)
     return {"success":True, "result": number ** 2}
 
 def on_done(result):
     print(result)
 
+#基于threading.Timer实现的非阻塞的例子
 def network_request_async(number, on_done):
     def timer_done():
         on_done({"success":True, "result": number ** 2})
@@ -38,16 +40,23 @@ def fetch_square_async(number):
             print("Result is: {}".format(response["result"]))
     network_request_async(number, on_done)
 
+#用于统计运行时间的解释器
+#解释器包了两层，如果只需要在解释器的所有调用中只执行一遍，应该将这个调用放在内层函数之外
+#如果每次解释器都需要调用，要放在内层函数里面
 def timeCount(func):
     @wraps(func)
     def wrap(*args, **kwargs):
         start = datetime.now()
         res = func(*args, **kwargs)
         end = datetime.now()
-        print("Func:{}, params:{}; Running time: {}".format(func.__name__,args,end - start))
+        if args:
+            print("Func:{}, params:{}; Running time: {}".format(func.__name__,*args,end - start))
+        else:   
+            print("Func:{}, params:{}; Running time: {}".format(func.__name__,"",end - start))
         return res
     return wrap
 
+#测试
 @timeCount
 def network_request_case(case):
     fetch_square(case)
